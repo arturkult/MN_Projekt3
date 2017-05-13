@@ -6,8 +6,8 @@
 
 using namespace std;
 
-#define N 100 //liczba wezlow wyjsciowych
-#define ILOSC_NA_KRANCACH N/5 // ilosc punktow wejsciowych od kranca przedzialu 
+#define N 100 //liczba wezlow wyjsciowych 
+#define PRC_NA_KRANCACH 3 // 1/PRC_NA_KRANCACH wszystkich wezlow wyjsciowych na krancach przedzialow
 
 int main() {
 	double x[N];
@@ -36,22 +36,57 @@ int main() {
 				plik >> tmp1;
 				plik.get(delimiter);
 				plik >> tmp2;
-#ifdef test
-				if (ileLinii % 100 == 0)
-				//if(ileLinii<ILOSC_NA_KRANCACH || ileLinii>N-ILOSC_NA_KRANCACH  || ileLinii % (N - 2 * ILOSC_NA_KRANCACH) == 0)
-
-#else
-				if (ileLinii % K == 0)
-#endif
-				{
-					xData.push_back(tmp1);
-					yData.push_back(tmp2);
-				}
-				ileLinii++;
-
+				xSource.push_back(tmp1);
+				ySource.push_back(tmp2);
 			}
 			plik.close();
 		}
+#ifndef test
+		int iloscWezlow = (xSource.size() / K);
+#else
+		int iloscWezlow = (xSource.size() / N);
+#endif
+		int krance = iloscWezlow / PRC_NA_KRANCACH;
+		for (int i = 0;i < krance;i++)
+		{
+			xData.push_back(xSource[i]);
+			yData.push_back(ySource[i]);
+		}
+		for (int i = krance;i < xSource.size() - krance;i++) {
+#ifndef test
+			if (i%K == 0)
+#else
+			if (i%N == 0)
+#endif
+			{
+				xData.push_back(xSource[i]);
+				yData.push_back(ySource[i]);
+			}
+
+		}
+		for (int i = 0;i < krance;i++)
+		{
+			xData.push_back(xSource[xSource.size() - i - 1]);
+			yData.push_back(ySource[ySource.size() - i - 1]);
+		}
+
+		/*for (int i = 0;i < xSource.size();i++)
+		{
+			if (i<krance ||
+				i>(iloscWezlow - krance) ||
+#ifndef test
+			i % K/(iloscWezlow-2*krance) == 0
+#else
+			i%  N == 0
+#endif
+				)
+			{
+				xData.push_back(xSource[i]);
+				yData.push_back(ySource[i]);
+			}
+		}*/
+
+
 		long size = xData.size();
 #pragma endregion
 		/*
@@ -86,20 +121,20 @@ int main() {
 	*/
 
 #pragma region AproksymacjaSplajn
-		int n = size-1;
+		int n = size - 1;
 		double* h = new double[n];
 		double* a = new double[n];
 		double* al = new double[n];
-		double* l = new double[n+1];
+		double* l = new double[n + 1];
 		double* mi = new double[n];
-		double* z = new double[n+1];
+		double* z = new double[n + 1];
 		double* c = new double[n + 1];
 		double* b = new double[n + 1];
 		double* d = new double[n + 1];
 
 		for (int i = 0;i < n;i++)
 			h[i] = xData[i + 1] - xData[i];
-		for (int i = 0;i < n+1;i++)
+		for (int i = 0;i < n + 1;i++)
 			a[i] = yData[i];
 		for (int i = 1;i < n;i++)
 			al[i] = 3 * (a[i + 1] - a[i]) / h[i] - 3 * (a[i] - a[i - 1]) / h[i - 1];
@@ -129,8 +164,8 @@ int main() {
 				if (j > 0)
 					x[j] = x[j - 1] + xData.at(size - 1) / N;
 				Wm[j] = a[i] + b[i] * (x[j] - xData[i]) + c[i] * pow(x[j] - xData[i], 2) + d[i] * pow(x[j] - xData[i], 3);
-			}
 		}
+}
 
 		ofstream outplik;
 		outplik.precision(16);
